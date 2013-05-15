@@ -19,7 +19,7 @@ const char* OpusErrorException::what() const noexcept
 }
 
 // I'd suggest reading with boost::spirit::big_dword or similar
-static uint32_t char_to_int(unsigned char ch[4])
+static uint32_t char_to_int(char ch[4])
 {
     return static_cast<uint32_t>(static_cast<unsigned char>(ch[0])<<24) |
            static_cast<uint32_t>(static_cast<unsigned char>(ch[1])<<16) |
@@ -40,26 +40,37 @@ struct COpusCodec::Impl
         _decoder.reset(err == OPUS_OK? raw : throw OpusErrorException(err) );
     }
 
-    bool decode(std::basic_ifstream<unsigned char>& fin,
-                std::basic_ofstream<unsigned char>& fout)
+    bool decode(std::ifstream& fin, std::ofstream& fout)
     {
-        unsigned char ch[4];
-        if (!fin.readsome(ch, 4))
+        char ch[4] = {0};
+
+        if (!fin.read(ch, 4) && fin.eof())
             return false;
+
         uint32_t len = char_to_int(ch);
 
         if(len>_state.data.size())
             throw std::runtime_error("Invalid payload length");
 
-        fin.readsome(ch, 4);
+        fin.read(ch, 4);
         const uint32_t enc_final_range = char_to_int(ch);
-        auto read = fin.readsome(&_state.data.front(), len);
+        auto append_position = reinterpret_cast<char*>(&_state.data.front());
+
+        size_t read;
+        for (read = 0ul; fin && read<len; append_position += read)
+        {
+            read += fin.readsome(append_position, len-read);
+        }
 
         if(read<len)
         {
             std::ostringstream oss;
-            oss << "Ran out of input, expecting " << len << " bytes got " << read;
+            oss << "Ran out of input, expecting " << len << " bytes got " << read << " at " << fin.tellg();
             throw std::runtime_error(oss.str());
+        } else
+        {
+            // FOR DEBUG
+            // std::cout << "received read frame " << _state.frameno << " of " << read << " bytes\n";
         }
 
         int output_samples;
@@ -94,7 +105,7 @@ struct COpusCodec::Impl
                         _state.fbytes[2*i]=s&0xFF;
                         _state.fbytes[2*i+1]=(s>>8)&0xFF;
                     }
-                    if(!fout.write(_state.fbytes.data(), sizeof(short)*_channels * (output_samples-_state.skip)))
+                    if(!fout.write(reinterpret_cast<char*>(_state.fbytes.data()), sizeof(short)*_channels * (output_samples-_state.skip)))
                         throw std::runtime_error("Error writing.\n");
                 }
                 if(output_samples<_state.skip)
@@ -162,8 +173,8 @@ COpusCodec::COpusCodec(int32_t sampling_rate, int channels)
 }
 
 bool COpusCodec::decode(
-        std::basic_ifstream<unsigned char>& fin,
-        std::basic_ofstream<unsigned char>& fout)
+        std::ifstream& fin,
+        std::ofstream& fout)
 {
     return _pimpl->decode(fin, fout);
 }

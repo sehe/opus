@@ -1,3 +1,7 @@
+// (c) Seth Heeren 2013
+//
+// Based on src/opus_demo.c in opus-1.0.2
+// License see http://www.opus-codec.org/license/
 #include <stdexcept>
 #include <memory>
 
@@ -11,10 +15,10 @@ private:
 
 struct COpusCodec
 {
-    COpusCodec(int32_t sampling_rate = 48000, int channels = 1);
+    COpusCodec(int32_t sampling_rate, int channels);
 
-    bool decode(std::basic_ifstream<unsigned char>& fin,
-                std::basic_ofstream<unsigned char>& fout);
+    bool decode(std::ifstream& fin,
+                std::ofstream& fout);
 private:
     struct Impl;
     std::shared_ptr<Impl> _pimpl;

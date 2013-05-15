@@ -14,23 +14,24 @@ int main(int argc, char *argv[])
         std::cerr << "Usage: " << argv[0] << " <input> <output>\n";
         return 255;
     }
-    std::basic_ifstream<unsigned char> fin(argv[1], std::ios::binary);
-    if(!fin)
-    {
-        throw std::runtime_error("Could not open input file");
-    }
-    std::basic_ofstream<unsigned char> fout(argv[2], std::ios::binary);
-    if(!fout)
-    {
-        throw std::runtime_error("Could not open output file");
-    }
+
+    std::basic_ifstream<char> fin (argv[1], std::ios::binary);
+    std::basic_ofstream<char> fout(argv[2], std::ios::binary);
+
+    if(!fin)  throw std::runtime_error("Could not open input file");
+    if(!fout) throw std::runtime_error("Could not open output file");
+
     try
     {
-        COpusCodec codec;
+        COpusCodec codec(48000, 1);
+
+        size_t frames = 0;
         while(codec.decode(fin, fout))
         {
-            ;
+            frames++;
         }
+
+        std::cout << "Successfully decoded " << frames << " frames\n";
     }
     catch(OpusErrorException const& e)
     {
