@@ -167,9 +167,14 @@ private:
 };
 
 COpusCodec::COpusCodec(int32_t sampling_rate, int channels)
-    : _pimpl(std::make_shared<Impl>(sampling_rate, channels))
+    : _pimpl(std::unique_ptr<Impl>(new Impl(sampling_rate, channels)))
 {
     //
+}
+
+COpusCodec::~COpusCodec()
+{
+    // this instantiates the pimpl deletor code on the, now-complete, pimpl class
 }
 
 bool COpusCodec::decode(

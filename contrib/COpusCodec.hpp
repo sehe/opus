@@ -16,10 +16,11 @@ private:
 struct COpusCodec
 {
     COpusCodec(int32_t sampling_rate, int channels);
+    ~COpusCodec();
 
     bool decode(std::ifstream& fin,
                 std::ofstream& fout);
 private:
     struct Impl;
-    std::shared_ptr<Impl> _pimpl;
+    std::unique_ptr<Impl> _pimpl;
 };
