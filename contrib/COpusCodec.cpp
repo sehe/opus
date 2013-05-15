@@ -54,10 +54,10 @@ struct COpusCodec::Impl
 
         fin.read(ch, 4);
         const uint32_t enc_final_range = char_to_int(ch);
-        auto append_position = reinterpret_cast<char*>(&_state.data.front());
+        const auto data = reinterpret_cast<char*>(&_state.data.front());
 
-        size_t read;
-        for (read = 0ul; fin && read<len; append_position += read)
+        size_t read = 0ul;
+        for (auto append_position = data; fin && read<len; append_position += read)
         {
             read += fin.readsome(append_position, len-read);
         }
@@ -102,11 +102,11 @@ struct COpusCodec::Impl
                     {
                         short s;
                         s=_state.out[i+(_state.skip*_channels)];
-                        _state.fbytes[2*i]=s&0xFF;
-                        _state.fbytes[2*i+1]=(s>>8)&0xFF;
+                        _state.fbytes[2*i]   = s&0xFF;
+                        _state.fbytes[2*i+1] = (s>>8)&0xFF;
                     }
                     if(!fout.write(reinterpret_cast<char*>(_state.fbytes.data()), sizeof(short)*_channels * (output_samples-_state.skip)))
-                        throw std::runtime_error("Error writing.\n");
+                        throw std::runtime_error("Error writing");
                 }
                 if(output_samples<_state.skip)
                 {
