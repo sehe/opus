@@ -40,7 +40,7 @@ struct COpusCodec::Impl
         _decoder.reset(err == OPUS_OK? raw : throw OpusErrorException(err) );
     }
 
-    bool decode(std::ifstream& fin, std::ofstream& fout)
+    bool decode_frame(std::ifstream& fin, std::ofstream& fout)
     {
         char ch[4] = {0};
 
@@ -158,10 +158,10 @@ COpusCodec::~COpusCodec()
     // this instantiates the pimpl deletor code on the, now-complete, pimpl class
 }
 
-bool COpusCodec::decode(
+bool COpusCodec::decode_frame(
         std::ifstream& fin,
         std::ofstream& fout)
 {
-    return _pimpl->decode(fin, fout);
+    return _pimpl->decode_frame(fin, fout);
 }
 
