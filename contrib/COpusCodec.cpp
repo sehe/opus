@@ -67,10 +67,6 @@ struct COpusCodec::Impl
             std::ostringstream oss;
             oss << "Ran out of input, expecting " << len << " bytes got " << read << " at " << fin.tellg();
             throw std::runtime_error(oss.str());
-        } else
-        {
-            // FOR DEBUG
-            // std::cout << "received read frame " << _state.frameno << " of " << read << " bytes\n";
         }
 
         int output_samples;
@@ -84,43 +80,29 @@ struct COpusCodec::Impl
             output_samples = _max_frame_size;
         }
 
-        if(_state.frameno >= 0)
-        {
-            output_samples = opus_decode(
-                    _decoder.get(), 
-                    lost ? NULL : _state.data.data(),
-                    len,
-                    _state.out.data(),
-                    output_samples,
-                    0);
+        output_samples = opus_decode(
+                _decoder.get(), 
+                lost ? NULL : _state.data.data(),
+                len,
+                _state.out.data(),
+                output_samples,
+                0);
 
-            if(output_samples>0)
+        if(output_samples>0)
+        {
+            for(int i=0; i<(output_samples)*_channels; i++)
             {
-                if(output_samples>_state.skip)
-                {
-                    for(int i=0; i<(output_samples-_state.skip)*_channels; i++)
-                    {
-                        short s;
-                        s=_state.out[i+(_state.skip*_channels)];
-                        _state.fbytes[2*i]   = s&0xFF;
-                        _state.fbytes[2*i+1] = (s>>8)&0xFF;
-                    }
-                    if(!fout.write(reinterpret_cast<char*>(_state.fbytes.data()), sizeof(short)*_channels * (output_samples-_state.skip)))
-                        throw std::runtime_error("Error writing");
-                }
-                if(output_samples<_state.skip)
-                {
-                    _state.skip -= output_samples;
-                }
-                else
-                {
-                    _state.skip = 0;
-                }
+                short s;
+                s=_state.out[i];
+                _state.fbytes[2*i]   = s&0xFF;
+                _state.fbytes[2*i+1] = (s>>8)&0xFF;
             }
-            else
-            {
-                throw OpusErrorException(output_samples); // negative return is error code
-            }
+            if(!fout.write(reinterpret_cast<char*>(_state.fbytes.data()), sizeof(short)* _channels * output_samples))
+                throw std::runtime_error("Error writing");
+        }
+        else
+        {
+            throw OpusErrorException(output_samples); // negative return is error code
         }
 
         uint32_t dec_final_range;
@@ -160,7 +142,6 @@ private:
         std::vector<short>         out;
         std::vector<unsigned char> fbytes, data;
         int32_t frameno   = 0;
-        int32_t skip      = 0;
         bool    lost_prev = true;
     };
     State _state;
