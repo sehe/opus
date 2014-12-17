@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
         COpusCodec codec(48000, 1);
 
         size_t frames = 0;
-        while(codec.decode(fin, fout))
+        while(codec.decode_frame(fin, fout))
         {
             frames++;
         }

@@ -7,7 +7,6 @@
 #include <iomanip>
 #include <memory>
 #include <sstream>
-#include <fstream>
 
 #include "opus.h"
 
@@ -40,7 +39,7 @@ struct COpusCodec::Impl
         _decoder.reset(err == OPUS_OK? raw : throw OpusErrorException(err) );
     }
 
-    bool decode_frame(std::ifstream& fin, std::ofstream& fout)
+    bool decode_frame(std::istream& fin, std::ostream& fout)
     {
         char ch[4] = {0};
 
@@ -159,8 +158,8 @@ COpusCodec::~COpusCodec()
 }
 
 bool COpusCodec::decode_frame(
-        std::ifstream& fin,
-        std::ofstream& fout)
+        std::istream& fin,
+        std::ostream& fout)
 {
     return _pimpl->decode_frame(fin, fout);
 }

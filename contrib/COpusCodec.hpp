@@ -4,6 +4,7 @@
 // License see http://www.opus-codec.org/license/
 #include <stdexcept>
 #include <memory>
+#include <iosfwd>
 
 struct OpusErrorException : public virtual std::exception
 {
@@ -18,7 +19,7 @@ struct COpusCodec
     COpusCodec(int32_t sampling_rate, int channels);
     ~COpusCodec();
 
-    bool decode_frame(std::ifstream& fin, std::ofstream& fout);
+    bool decode_frame(std::istream& fin, std::ostream& fout);
 private:
     struct Impl;
     std::unique_ptr<Impl> _pimpl;
